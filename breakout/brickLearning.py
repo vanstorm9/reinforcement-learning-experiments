@@ -86,164 +86,15 @@ def frame_step(input_actions):
 
 	# if statement for missing Ball
 	if isCrash:
+		print 'CRASH!'
 		reward = -1
-		isCrash = False1
+		isCrash = False
 
 	terminal = True
 	image_data = pygame.surfarray.array3d(pygame.display.get_surface())
 
 	return image_data, reward, terminal
 
-'''
-def movePaddle(self, command):
-	if command == 'l':
-	    self.paddle.left -= 5
-	    if self.paddle.left < 0:
-	        self.paddle.left = 0
-
-	elif command == 'r':
-	    self.paddle.left += 5
-	    if self.paddle.left > MAX_PADDLE_X:
-	        self.paddle.left = MAX_PADDLE_X
-'''
-'''
-def trainModel(model):
-
-    global c
-
-    # open up a game state to communicate with emulator
-    #game_state = game.GameState()
-
-    # store the previous observations in replay memory
-    D = deque()
-
-    # get the first state by doing nothing and preprocess the image to 80x80x4
-    do_nothing = np.zeros(ACTIONS)
-    do_nothing[0] = 1
-    x_t, r_0, terminal = frame_step(do_nothing)
-
-    x_t = skimage.color.rgb2gray(x_t)
-    x_t = skimage.transform.resize(x_t,(80,80))
-    x_t = skimage.exposure.rescale_intensity(x_t,out_range=(0,255))
-
-    s_t = np.stack((x_t, x_t, x_t, x_t), axis=0)
-
-    #In Keras, need to reshape
-    s_t = s_t.reshape(1, s_t.shape[0], s_t.shape[1], s_t.shape[2])
-
-    if c == 'Run':
-	OBSERVE = 999999999    #We keep observe, never train
-	epsilon = FINAL_EPSILON
-	print ("Now we load weight")
-	model.load_weights("model.h5")
-	adam = Adam(lr=1e-6)
-	model.compile(loss='mse',optimizer=adam)
-	print ("Weight load successfully")    
-    else:                       #We go to training mode
-	OBSERVE = OBSERVATION
-	epsilon = INITIAL_EPSILON
-
-    t = 0
-    while (True):
-	loss = 0
-	Q_sa = 0
-	action_index = 0
-	r_t = 0
-	a_t = np.zeros([ACTIONS])
-	#choose an action epsilon greedy
-	if t % FRAME_PER_ACTION == 0:
-	    if random.random() <= epsilon:
-		print("----------Random Action----------")
-		action_index = random.randrange(ACTIONS)
-		a_t[action_index] = 1
-	    else:
-		q = model.predict(s_t)       #input a stack of 4 images, get the prediction
-		max_Q = np.argmax(q)
-		action_index = max_Q
-		a_t[max_Q] = 1
-
-	#We reduced the epsilon gradually
-	if epsilon > FINAL_EPSILON and t > OBSERVE:
-	    epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
-
-	#run the selected action and observed next state and reward
-	x_t1_colored, r_t, terminal = frame_step(a_t)
-
-	x_t1 = skimage.color.rgb2gray(x_t1_colored)
-	x_t1 = skimage.transform.resize(x_t1,(80,80))
-	x_t1 = skimage.exposure.rescale_intensity(x_t1, out_range=(0, 255))
-
-	x_t1 = x_t1.reshape(1, 1, x_t1.shape[0], x_t1.shape[1])
-	s_t1 = np.append(x_t1, s_t[:, :3, :, :], axis=1)
-
-	# store the transition in D
-	D.append((s_t, action_index, r_t, s_t1, terminal))
-	if len(D) > REPLAY_MEMORY:
-	    D.popleft()
-
-	#only train if done observing
-	if t > OBSERVE:
-	    #sample a minibatch to train on
-	    minibatch = random.sample(D, BATCH)
-
-	    inputs = np.zeros((BATCH, s_t.shape[1], s_t.shape[2], s_t.shape[3]))   #32, 80, 80, 4
-	    targets = np.zeros((inputs.shape[0], ACTIONS))                         #32, 2
-
-	    #Now we do the experience replay
-	    for i in range(0, len(minibatch)):
-		state_t = minibatch[i][0]
-		action_t = minibatch[i][1]   #This is action index
-		reward_t = minibatch[i][2]
-		state_t1 = minibatch[i][3]
-		terminal = minibatch[i][4]
-		# if terminated, only equals reward
-
-		inputs[i:i + 1] = state_t    #I saved down s_t
-
-		targets[i] = model.predict(state_t)  # Hitting each buttom probability
-		Q_sa = model.predict(state_t1)
-
-		if terminal:
-		    targets[i, action_t] = reward_t
-		else:
-		    targets[i, action_t] = reward_t + GAMMA * np.max(Q_sa)
-
-	    # targets2 = normalize(targets)
-	    loss += model.train_on_batch(inputs, targets)
-
-	s_t = s_t1
-	t = t + 1
-	
-	# save progress every 10000 iterations
-	if t % 100 == 0:
-	    print("Now we save model")
-	    model.save_weights("model.h5", overwrite=True)
-	    with open("model.json", "w") as outfile:
-		json.dump(model.to_json(), outfile)
-
-	# print info
-	state = ""
-	if t <= OBSERVE:
-	    state = "observe"
-	elif t > OBSERVE and t <= OBSERVE + EXPLORE:
-	    state = "explore"
-	else:
-	    state = "train"
-
-	if action_index == 0:
-		movePaddle('l')
-	elif action_index == 1:
-		movePaddle('r')
-
-
-	print("TIMESTEP", t, "/ STATE", state, \
-	    "/ EPSILON", epsilon, "/ ACTION", action_index, "/ REWARD", r_t, \
-	    "/ Q_MAX " , np.max(Q_sa), "/ Loss ", loss)
-
-    print("Episode finished!")
-    print("************************")
-
-'''
 
 SCREEN_SIZE   = 640,480
 
@@ -359,6 +210,7 @@ class Bricka:
 
     def move_ball(self):
 	global mainScore
+
         self.ball.left += self.ball_vel[0]
         self.ball.top  += self.ball_vel[1]
 
@@ -377,7 +229,11 @@ class Bricka:
             self.ball_vel[1] = -self.ball_vel[1]
 
     def handle_collisions(self):
-        for brick in self.bricks:
+	global mainScore
+	global ifScore
+	global isCrash
+        
+	for brick in self.bricks:
             if self.ball.colliderect(brick):
                 self.score += 3
 		mainScore += 3
@@ -394,11 +250,16 @@ class Bricka:
             self.ball_vel[1] = -self.ball_vel[1]
         elif self.ball.top > self.paddle.top:
             self.lives -= 1
+	    isCrash = True
+
+	    '''
             if self.lives > 0:
                 self.state = STATE_BALL_IN_PADDLE
             else:
                 self.state = STATE_GAME_OVER
-		isCrash = True
+	    '''
+
+            self.state = STATE_BALL_IN_PADDLE
 
     def show_stats(self):
         if self.font:
@@ -517,14 +378,21 @@ class Bricka:
 
 
                 elif self.state == STATE_BALL_IN_PADDLE:
+
+
+        	    self.paddle   = pygame.Rect(300,PADDLE_Y,PADDLE_WIDTH,PADDLE_HEIGHT)
+
                     self.ball.left = self.paddle.left + self.paddle.width / 2
                     self.ball.top  = self.paddle.top - self.ball.height
+
+		    		    
+
                     self.show_message("PRESS SPACE TO LAUNCH THE BALL")
 
-		    '''		
+		    # Comment out to automatically fire ball after begin / death	
 		    self.ball_vel = [5,-5]
             	    self.state = STATE_PLAYING
-		    '''
+		    
 
                 elif self.state == STATE_GAME_OVER:
                     self.show_message("GAME OVER. PRESS ENTER TO PLAY AGAIN")
@@ -674,63 +542,12 @@ class Bricka:
 
 
         while 1:
-	    '''            
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit
-
-            self.clock.tick(50)
-            self.screen.fill(BLACK)
-            self.check_input()
-
-		
-	    ## While game is playing ##
-            if self.state == STATE_PLAYING:
-
-
-
-                self.move_ball()
-                self.handle_collisions()
-
-
-
-
-
-
-            elif self.state == STATE_BALL_IN_PADDLE:
-                self.ball.left = self.paddle.left + self.paddle.width / 2
-                self.ball.top  = self.paddle.top - self.ball.height
-                self.show_message("PRESS SPACE TO LAUNCH THE BALL")
-
-		
-
-
-            elif self.state == STATE_GAME_OVER:
-                self.show_message("GAME OVER. PRESS ENTER TO PLAY AGAIN")
-            elif self.state == STATE_WON:
-                self.show_message("YOU WON! PRESS ENTER TO PLAY AGAIN")
-                
-
-
-
-            self.draw_bricks()
-
-            # Draw paddle
-            pygame.draw.rect(self.screen, BLUE, self.paddle)
-
-            # Draw ball
-            pygame.draw.circle(self.screen, WHITE, (self.ball.left + BALL_RADIUS, self.ball.top + BALL_RADIUS), BALL_RADIUS)
-
-            self.show_stats()
-
-            pygame.display.flip()
-	    '''
-            model = buildmodel()
+            
+	    model = buildmodel()
 	
 	    self.trainModel(model)
 	    
-	    #self.movePaddle('l')
-		#######################################
+	     #######################################
 
 if __name__ == "__main__":
     Bricka().run()
