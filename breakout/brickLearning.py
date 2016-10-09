@@ -87,7 +87,7 @@ def frame_step(input_actions):
 	# if statement for missing Ball
 	if isCrash:
 		print 'CRASH!'
-		reward = -1
+		reward = -1000
 		isCrash = False
 
 	terminal = True
