@@ -33,8 +33,10 @@ img_channels = 4 #We stack 4 frames
 
 isCrash = False
 ifScore = False
+isStrike = False
 mainScore = 0
 
+CONFIG = 'nothreshold'
 ACTIONS = 2 # number of valid actions
 GAMMA = 0.99 # decay rate of past observations
 OBSERVATION = 3200. # timesteps to observe before training
@@ -76,12 +78,21 @@ def frame_step(input_actions):
 	global ifScore
 	global isCrash
 	global mainScore
+	global isStrike
+	global timer
 
-	reward = 0.1
+	reward = -1
+
+
+	if isStrike and timer > 12:
+		reward = 3000
+		isStrike = False
+	else:
+		isStrike = False
 
 	# if statement for hitting ball
 	if ifScore:
-		reward = 1
+		reward = 10
 		ifScore = False
 
 	# if statement for missing Ball
@@ -89,10 +100,11 @@ def frame_step(input_actions):
 		print 'CRASH!'
 		reward = -1000
 		isCrash = False
+		timer = 0
 
 	terminal = True
 	image_data = pygame.surfarray.array3d(pygame.display.get_surface())
-
+	pygame.display.update()
 	return image_data, reward, terminal
 
 
@@ -111,7 +123,7 @@ MAX_BALL_X   = SCREEN_SIZE[0] - BALL_DIAMETER
 MAX_BALL_Y   = SCREEN_SIZE[1] - BALL_DIAMETER
 
 # Paddle Y coordinate
-PADDLE_Y = SCREEN_SIZE[1] - PADDLE_HEIGHT - 10
+PADDLE_Y = SCREEN_SIZE[1] - PADDLE_HEIGHT*2 - 10
 
 # Color constants
 BLACK = (0,0,0)
@@ -124,6 +136,9 @@ STATE_BALL_IN_PADDLE = 0
 STATE_PLAYING = 1
 STATE_WON = 2
 STATE_GAME_OVER = 3
+
+timer = 0
+
 
 class Bricka:
 
@@ -149,9 +164,9 @@ class Bricka:
         self.state = STATE_BALL_IN_PADDLE
 
         self.paddle   = pygame.Rect(300,PADDLE_Y,PADDLE_WIDTH,PADDLE_HEIGHT)
-        self.ball     = pygame.Rect(300,PADDLE_Y - BALL_DIAMETER,BALL_DIAMETER,BALL_DIAMETER)
+        self.ball     = pygame.Rect(500,PADDLE_Y - BALL_DIAMETER,BALL_DIAMETER,BALL_DIAMETER)
 
-        self.ball_vel = [5,-5]
+        self.ball_vel = [155,-155]
 
         self.create_bricks()
         
@@ -173,7 +188,8 @@ class Bricka:
 
 
 
-    ########### Key controls #############       
+    ########### Key controls #############     
+	'''  
     def check_input(self):
         keys = pygame.key.get_pressed()
         
@@ -192,11 +208,11 @@ class Bricka:
                 self.paddle.left = MAX_PADDLE_X
 
         if keys[pygame.K_SPACE] and self.state == STATE_BALL_IN_PADDLE:
-            self.ball_vel = [5,-5]
+            self.ball_vel = [25,-25]
             self.state = STATE_PLAYING
         elif keys[pygame.K_RETURN] and (self.state == STATE_GAME_OVER or self.state == STATE_WON):
             self.init_game()
-
+	'''
 
 
 	
@@ -211,8 +227,9 @@ class Bricka:
     def move_ball(self):
 	global mainScore
 
-        self.ball.left += self.ball_vel[0]
-        self.ball.top  += self.ball_vel[1]
+        
+	self.ball.left += self.ball_vel[0]
+	self.ball.top  += self.ball_vel[1]
 
         if self.ball.left <= 0:
             self.ball.left = 0
@@ -232,7 +249,8 @@ class Bricka:
 	global mainScore
 	global ifScore
 	global isCrash
-        
+	global isStrike        
+
 	for brick in self.bricks:
             if self.ball.colliderect(brick):
                 self.score += 3
@@ -248,6 +266,10 @@ class Bricka:
         if self.ball.colliderect(self.paddle):
             self.ball.top = PADDLE_Y - BALL_DIAMETER
             self.ball_vel[1] = -self.ball_vel[1]
+	    
+	    isStrike = True	    
+
+
         elif self.ball.top > self.paddle.top:
             self.lives -= 1
 	    isCrash = True
@@ -277,13 +299,13 @@ class Bricka:
     def movePaddle(self, command):
 	if command == 'l':
 	    print 'MOVING LEFT'
-	    self.paddle.left -= 5
+	    self.paddle.left -= 10
 	    if self.paddle.left < 0:
 	        self.paddle.left = 0
 
 	elif command == 'r':
 	    print 'MOVING RIGHT'
-	    self.paddle.left += 5
+	    self.paddle.left += 10
 	    if self.paddle.left > MAX_PADDLE_X:
 	        self.paddle.left = MAX_PADDLE_X
 
@@ -292,8 +314,15 @@ class Bricka:
 
 
 	    global c
+	    global timer
 
+            self.draw_bricks()
 
+            # Draw paddle
+            pygame.draw.rect(self.screen, WHITE, self.paddle)
+
+            # Draw ball
+            pygame.draw.circle(self.screen, WHITE, (self.ball.left + BALL_RADIUS, self.ball.top + BALL_RADIUS), BALL_RADIUS)
 
 	    # open up a game state to communicate with emulator
 
@@ -316,6 +345,9 @@ class Bricka:
 	    x_t, r_0, terminal = frame_step(do_nothing)
 
 
+
+	    from skimage import io
+	    io.imsave('local2.png', x_t)
 
 	    x_t = skimage.color.rgb2gray(x_t)
 
@@ -361,7 +393,7 @@ class Bricka:
 
                 self.clock.tick(50)
                 self.screen.fill(BLACK)
-                self.check_input()
+                #self.check_input()
 
 		
 	        ## While game is playing ##
@@ -379,18 +411,32 @@ class Bricka:
 
                 elif self.state == STATE_BALL_IN_PADDLE:
 
+        	    self.create_bricks()
 
         	    self.paddle   = pygame.Rect(300,PADDLE_Y,PADDLE_WIDTH,PADDLE_HEIGHT)
 
-                    self.ball.left = self.paddle.left + self.paddle.width / 2
-                    self.ball.top  = self.paddle.top - self.ball.height
 
+                    
+		    self.ball.left = self.paddle.left + self.paddle.width / 2
+		    self.ball.top  = self.paddle.top - self.ball.height
 		    		    
 
                     self.show_message("PRESS SPACE TO LAUNCH THE BALL")
 
 		    # Comment out to automatically fire ball after begin / death	
-		    self.ball_vel = [5,-5]
+
+
+		    from random import randint
+		    x=randint(0,4)
+		    if x == 1:
+		        self.ball_vel = [-5,5]
+		    elif x == 2:
+		        self.ball_vel = [5,-5]
+		    elif x == 3:
+		        self.ball_vel = [5,-10]
+		    elif x == 4:
+		        self.ball_vel = [10,-5]
+
             	    self.state = STATE_PLAYING
 		    
 
@@ -405,7 +451,7 @@ class Bricka:
                 self.draw_bricks()
 
                 # Draw paddle
-                pygame.draw.rect(self.screen, BLUE, self.paddle)
+                pygame.draw.rect(self.screen, WHITE, self.paddle)
 
                 # Draw ball
                 pygame.draw.circle(self.screen, WHITE, (self.ball.left + BALL_RADIUS, self.ball.top + BALL_RADIUS), BALL_RADIUS)
@@ -414,7 +460,7 @@ class Bricka:
 
                 pygame.display.flip()
 
-
+		timer = timer + 1
 
 
 
@@ -452,8 +498,11 @@ class Bricka:
 		x_t1_colored, r_t, terminal = frame_step(a_t)
 
 		x_t1 = skimage.color.rgb2gray(x_t1_colored)
+		from skimage import io
+		io.imsave('local.png', x_t1)
 		x_t1 = skimage.transform.resize(x_t1,(80,80))
 		x_t1 = skimage.exposure.rescale_intensity(x_t1, out_range=(0, 255))
+
 
 		x_t1 = x_t1.reshape(1, 1, x_t1.shape[0], x_t1.shape[1])
 		s_t1 = np.append(x_t1, s_t[:, :3, :, :], axis=1)
@@ -469,8 +518,12 @@ class Bricka:
 		    #sample a minibatch to train on
 		    minibatch = random.sample(D, BATCH)
 
+
+
 		    inputs = np.zeros((BATCH, s_t.shape[1], s_t.shape[2], s_t.shape[3]))   #32, 80, 80, 4
 		    targets = np.zeros((inputs.shape[0], ACTIONS))                         #32, 2
+
+
 
 		    #Now we do the experience replay
 		    for i in range(0, len(minibatch)):
@@ -479,14 +532,17 @@ class Bricka:
 			reward_t = minibatch[i][2]
 			state_t1 = minibatch[i][3]
 			terminal = minibatch[i][4]
+
 			# if terminated, only equals reward
 
 			inputs[i:i + 1] = state_t    #I saved down s_t
+
 
 			targets[i] = model.predict(state_t)  # Hitting each buttom probability
 			Q_sa = model.predict(state_t1)
 
 
+			
 			if terminal:
 			    targets[i, action_t] = reward_t
 			else:
@@ -515,11 +571,14 @@ class Bricka:
 		else:
 		    state = "train"
 
-		print action_index
 		if action_index == 0:
 			self.movePaddle('l')
 		elif action_index == 1:
 			self.movePaddle('r')
+
+
+		resolution = 0.00001
+
 
 
 		print("TIMESTEP", t, "/ STATE", state, \
