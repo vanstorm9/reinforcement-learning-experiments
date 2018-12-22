@@ -2,14 +2,22 @@ grid = [[-0.05,-0.05,-0.05,'+1'],
 	[-0.05,'OBS',-0.05,'-1'],
 	[-0.05,-0.05,-0.05,-0.05]]
 
-startState = (2,2)
+gridDir = [[None,None,None,'+1'],
+	   [None,'OBS',None,'-1'],
+	   [None,None,None,None]]
 
-alpha =  1.0 
+startState = (2,2)
+iterNum = 100
+
+alpha =  0.9 
 moveProb = 0.8
+
+penalty = -0.05
+
 randMoveProb = (1.0-moveProb)/2.0
 
-def viewGrid():
-	for row in grid:
+def viewGrid(world):
+	for row in world:
 		print row
 
 def getStateReward(row,col,direction):
@@ -67,12 +75,16 @@ def calculateAction(row,col):
 	evalList = [['up',upValue],['down',downValue],['left',leftValue],['right',rightValue]]
 
 	maxVal = max(evalList, key=lambda x: x[1])
-	print maxVal, ' ', (row,col)
+	#print maxVal, ' ', (row,col)
 
 	direction, value = maxVal	
 
 	return direction, value
+'''
+def updateStateValue(row,col,direction,value):
 
+	return
+'''
 def policyEvaluation():
 
 	# We iterate through everything
@@ -82,14 +94,24 @@ def policyEvaluation():
 			if type(pos) is not float:
 				continue
 			# We have to check all four directions
-			calculateAction(rowNum,colNum)
-			
+			direction, value = calculateAction(rowNum,colNum)
 
+			# Update states
+			grid[rowNum][colNum] = penalty + alpha*value 			
+			gridDir[rowNum][colNum] = direction
 	
 
+print 'Inital State'
+viewGrid(grid)
+print '\n\n\n'
 
-viewGrid()
-policyEvaluation()
+for i in range(0,iterNum):
+	policyEvaluation()
+
+print 'After ', iterNum, ' iterations: '
+viewGrid(grid)
+print '\n'
+viewGrid(gridDir)
 
 
 
