@@ -2,8 +2,8 @@ from worldState import *
 
 iterNum = 100
 
-alpha =  0.9 
-moveProb = 0.99
+alpha =  0.40 
+moveProb = 0.8
 
 penalty = -0.05
 
@@ -90,7 +90,7 @@ def policyEvaluation():
 			direction, value = calculateAction(rowNum,colNum)
 
 			# Update states
-			grid[rowNum][colNum] = penalty + alpha*value 			
+			grid[rowNum][colNum] = round(penalty + alpha*value,2) 			
 			gridDir[rowNum][colNum] = direction
 '''	
 def move(direction):
