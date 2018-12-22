@@ -1,6 +1,6 @@
-grid = [[0.0,0.0,0.0,'+1'],
-	[0.0,'OBS',0.0,'-1'],
-	[0.0,0.0,0.0,0.0]]
+grid = [[-0.05,-0.05,-0.05,'+1'],
+	[-0.05,'OBS',-0.05,'-1'],
+	[-0.05,-0.05,-0.05,-0.05]]
 
 startState = (2,2)
 
@@ -17,40 +17,36 @@ def getStateReward(row,col,direction):
 	
 	if direction == 'up':
 		posIndex = row-1	
-		pos = grid[posIndex][col]
-
 		if posIndex < 0:	
 			return grid[row][col]
+		pos = grid[posIndex][col]
+
 	elif direction == 'down':
 		posIndex = row+1	
-		pos = grid[posIndex][col]
-
-		if posIndex < len(grid):	
+		if posIndex >= len(grid):	
 			return grid[row][col]
+		pos = grid[posIndex][col]
 	elif direction == 'left':
 		posIndex = col-1	
-		pos = grid[row][posIndex]
-
 		if posIndex < 0:	
 			return grid[row][col]
-	elif direction == 'left':
-		posIndex = col+1	
 		pos = grid[row][posIndex]
-
-		if posIndex < len(grid[0]):	
+	elif direction == 'right':
+		posIndex = col+1	
+		if posIndex >= len(grid[0]):	
 			return grid[row][col]
-	
-	
-
-	# Checks if terminal state
-	if pos[0] == '+' or pos[0]=='-':
-		return int(pos[1])
-	if pos[0] == '-':
-		return int(pos[1])*-1
+		pos = grid[row][posIndex]
 
 	# Determines if it is a normal valid state
 	if type(pos) is float:
 		return pos
+
+	# Checks if terminal state
+	if pos[0] == '+':
+		return int(pos[1])
+	if pos[0] == '-':
+		return int(pos[1])*-1
+
 
 	# Probably an obstacle then
 	return grid[row][col]
@@ -59,30 +55,40 @@ def calculateAction(row,col):
 	# We calculate the next action
 	
 	# Check up
-	upValue = alpha*(moveProb*(getStateReward(row,col,'up')) +  randMoveProb(getStateReward(row,col,'left')) + randMoveProb(getStateReward(row,col,'right'))    )
-
+	upValue = alpha*(moveProb*(getStateReward(row,col,'up')) +  randMoveProb*(getStateReward(row,col,'left')) + randMoveProb*(getStateReward(row,col,'right'))    )
 	# Check down
-	downValue = alpha*(moveProb*(getStateReward(row,col,'down')) +  randMoveProb(getStateReward(row,col,'left')) + randMoveProb(getStateReward(row,col,'right'))    )
+	downValue = alpha*(moveProb*(getStateReward(row,col,'down')) +  randMoveProb*(getStateReward(row,col,'left')) + randMoveProb*(getStateReward(row,col,'right'))    )
 
+	# Check left
+	leftValue = alpha*(moveProb*(getStateReward(row,col,'left')) +  randMoveProb*(getStateReward(row,col,'up')) + randMoveProb*(getStateReward(row,col,'down'))    )
+	# Check right
+	rightValue = alpha*(moveProb*(getStateReward(row,col,'right')) +  randMoveProb*(getStateReward(row,col,'up')) + randMoveProb*(getStateReward(row,col,'down'))    )
 
+	evalList = [['up',upValue],['down',downValue],['left',leftValue],['right',rightValue]]
 
+	maxVal = max(evalList, key=lambda x: x[1])
+	print maxVal, ' ', (row,col)
 
+	direction, value = maxVal	
+
+	return direction, value
 
 def policyEvaluation():
 
 	# We iterate through everything
 	for rowNum,row in enumerate(grid):
-		for pos in enumerate(row):
+		for colNum,pos in enumerate(row):
 			# If it is not a valid state, we ignore
 			if type(pos) is not float:
 				continue
 			# We have to check all four directions
+			calculateAction(rowNum,colNum)
 			
 
 	
 
 
-#viewGrid()
+viewGrid()
 policyEvaluation()
 
 
