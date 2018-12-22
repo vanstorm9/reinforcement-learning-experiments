@@ -1,16 +1,9 @@
-grid = [[-0.05,-0.05,-0.05,'+1'],
-	[-0.05,'OBS',-0.05,'-1'],
-	[-0.05,-0.05,-0.05,-0.05]]
+from worldState import *
 
-gridDir = [[None,None,None,'+1'],
-	   [None,'OBS',None,'-1'],
-	   [None,None,None,None]]
-
-startState = (2,2)
 iterNum = 100
 
 alpha =  0.9 
-moveProb = 0.8
+moveProb = 0.99
 
 penalty = -0.05
 
@@ -51,9 +44,9 @@ def getStateReward(row,col,direction):
 
 	# Checks if terminal state
 	if pos[0] == '+':
-		return int(pos[1])
+		return int(pos[1:])
 	if pos[0] == '-':
-		return int(pos[1])*-1
+		return int(pos[1:])*-1
 
 
 	# Probably an obstacle then
@@ -99,7 +92,20 @@ def policyEvaluation():
 			# Update states
 			grid[rowNum][colNum] = penalty + alpha*value 			
 			gridDir[rowNum][colNum] = direction
+'''	
+def move(direction):
+	if direction == 'up':
+		
+'''
+
+def attemptStage():
+	startX, startY = startState
+	pos = grid[startX][startY]
+	intentDir = gridDir[startX][startY]
+
 	
+	pos = move(intentDir)
+
 
 print 'Inital State'
 viewGrid(grid)

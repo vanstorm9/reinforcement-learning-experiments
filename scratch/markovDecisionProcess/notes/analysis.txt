@@ -1,0 +1,26 @@
+
+
+
+Bridge Crossing Analysis:
+The agent will attempt to cross the bridge if there is low noise and it highly likely to move in its intended direction. 
+
+Therefore, it will cross the bridge if the intended movement probability is 0.99
+
+____________________________________________________________________
+Input:
+alpha =  0.9 
+moveProb = 0.99
+
+
+Output: 
+After  100  iterations: 
+['OBS', '-100', '-100', '-100', '-100', '-100', 'OBS']
+['+1', 0.41416665740761455, 1.58893460207958, 3.0539152039899995, 4.8808020999999995, 7.159, '+10']
+['OBS', '-100', '-100', '-100', '-100', '-100', 'OBS']
+
+
+['OBS', '-100', '-100', '-100', '-100', '-100', 'OBS']
+['+1', 'right', 'right', 'right', 'right', 'right', '+10']
+['OBS', '-100', '-100', '-100', '-100', '-100', None]
+_____________________________________________________________________
+
