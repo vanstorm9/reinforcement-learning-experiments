@@ -2,7 +2,7 @@ from worldState import *
 
 iterNum = 100
 
-alpha =  0.40 
+alpha =  0.9 
 moveProb = 0.8
 
 penalty = -0.05
@@ -73,11 +73,7 @@ def calculateAction(row,col):
 	direction, value = maxVal	
 
 	return direction, value
-'''
-def updateStateValue(row,col,direction,value):
 
-	return
-'''
 def policyEvaluation():
 
 	# We iterate through everything

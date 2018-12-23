@@ -1,3 +1,23 @@
+Classical test:
+
+discount/alpha = 0.9
+living reward = -0.05
+intended move probability = 0.8
+
+
+Output:
+After  100  iterations: 
+[0.29, 0.47, 0.68, '+1']
+[0.16, 'OBS', 0.34, '-1']
+[0.06, 0.07, 0.17, -0.02]
+
+
+['right', 'right', 'right', '+1']
+['up', 'OBS', 'up', '-1']
+['up', 'right', 'up', 'left']
+
+
+
 
 
 
