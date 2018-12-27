@@ -3,6 +3,17 @@ import random
 
 episodeLimit = 100
 
+
+epsilon = 1.0
+epsilonDecay = 0.95
+
+
+'''
+# deterministic
+epsilon = 0.0
+epsilonDecay = 1.0
+'''
+
 alpha =  0.9
 gamma = 0.9 
 moveProb = 0.8
@@ -12,70 +23,18 @@ penalty = -0.05
 
 randMoveProb = (1.0-moveProb)/2.0
 
+
+def initalizeGrid(grid):
+	for rowNum,row in enumerate(grid):
+		for colNum,col in enumerate(row):
+			if col is None:
+				grid[rowNum][colNum] = [0.0,0.0,0.0,0.0]
+
+	return grid
+
 def viewGrid(world):
 	for row in world:
 		print row
-
-def getStateReward(row,col,direction):
-	# Check bounderies and obstacles
-	
-	if direction == 'up':
-		posIndex = row-1	
-		if posIndex < 0:	
-			return grid[row][col]
-		pos = grid[posIndex][col]
-
-	elif direction == 'down':
-		posIndex = row+1	
-		if posIndex >= len(grid):	
-			return grid[row][col]
-		pos = grid[posIndex][col]
-	elif direction == 'left':
-		posIndex = col-1	
-		if posIndex < 0:	
-			return grid[row][col]
-		pos = grid[row][posIndex]
-	elif direction == 'right':
-		posIndex = col+1	
-		if posIndex >= len(grid[0]):	
-			return grid[row][col]
-		pos = grid[row][posIndex]
-
-	# Determines if it is a normal valid state
-	if type(pos) is float:
-		return pos
-
-	# Checks if terminal state
-	if pos[0] == '+':
-		return int(pos[1:])
-	if pos[0] == '-':
-		return int(pos[1:])*-1
-
-
-	# Probably an obstacle then
-	return grid[row][col]
-
-def calculateAction(row,col):
-	# We calculate the next action
-	
-	# Check up
-	upValue = alpha*(moveProb*(getStateReward(row,col,'up')) +  randMoveProb*(getStateReward(row,col,'left')) + randMoveProb*(getStateReward(row,col,'right'))    )
-	# Check down
-	downValue = alpha*(moveProb*(getStateReward(row,col,'down')) +  randMoveProb*(getStateReward(row,col,'left')) + randMoveProb*(getStateReward(row,col,'right'))    )
-
-	# Check left
-	leftValue = alpha*(moveProb*(getStateReward(row,col,'left')) +  randMoveProb*(getStateReward(row,col,'up')) + randMoveProb*(getStateReward(row,col,'down'))    )
-	# Check right
-	rightValue = alpha*(moveProb*(getStateReward(row,col,'right')) +  randMoveProb*(getStateReward(row,col,'up')) + randMoveProb*(getStateReward(row,col,'down'))    )
-
-	evalList = [['up',upValue],['down',downValue],['left',leftValue],['right',rightValue]]
-
-	maxVal = max(evalList, key=lambda x: x[1])
-	#print maxVal, ' ', (row,col)
-
-	direction, value = maxVal	
-
-	return direction, value
 
 
 def nextMove(coord,direction):
@@ -103,9 +62,9 @@ def nextMove(coord,direction):
 		coordUp = (row-1,col)
 		termPos = grid[row-1][col]
 		if termPos[0] == '+':
-			reward = int(termPos[1:])
+			reward = float(termPos[1:])
 		if termPos[0] == '-':
-			reward = int(termPos[1:])*-1
+			reward = float(termPos[1:])*-1
 	
 		currUp = currUp + alpha*(reward - currUp)		
 
@@ -126,9 +85,9 @@ def nextMove(coord,direction):
 		coordDown = (row+1,col)
 		termPos = grid[row+1][col]
 		if termPos[0] == '+':
-			reward = int(termPos[1:])
+			reward = float(termPos[1:])
 		if termPos[0] == '-':
-			reward = int(termPos[1:])*-1
+			reward = float(termPos[1:])*-1
 	
 		currDown = currDown + alpha*(reward - currDown)		
 	# left
@@ -147,9 +106,9 @@ def nextMove(coord,direction):
 		coordLeft = (row,col-1)
 		termPos = grid[row][col-1]
 		if termPos[0] == '+':
-			reward = int(termPos[1:])
+			reward = float(termPos[1:])
 		if termPos[0] == '-':
-			reward = int(termPos[1:])*-1
+			reward = float(termPos[1:])*-1
 	
 		currLeft = currLeft + alpha*(reward - currLeft)		
 
@@ -170,9 +129,9 @@ def nextMove(coord,direction):
 		coordRight = (row,col+1)
 		termPos = grid[row][col+1]
 		if termPos[0] == '+':
-			reward = int(termPos[1:])
+			reward = float(termPos[1:])
 		if termPos[0] == '-':
-			reward = int(termPos[1:])*-1
+			reward = float(termPos[1:])*-1
 	
 		currRight = currRight + alpha*(reward - currRight)		
 
@@ -197,13 +156,14 @@ def nextMove(coord,direction):
 
 
 def runTraining():
+	global epsilon
 
 	episodeNum = 0
 
 	while True:
 		# Iterate through every episode
 		print '----------- ', episodeNum, ' --------------'
-
+		print '1 - epsilon: ', (1-epsilon)
 		movementList = []
 		startx,starty = startState
 
@@ -213,20 +173,25 @@ def runTraining():
 		terminalState = False
 		while not terminalState:
 		
-			if random.randint(0,10) > 9:
+			if random.random() > (1.0-epsilon):
 				randDirAr = ['up','down','left','right']
 				randIndex = random.randint(0,3)
 				direction, value, coord, index = nextMove(coord,randDirAr[randIndex])
 			else:
-				direction, value, coord, index = nextMove(coord,'max')
+				refDirectAr = ['up','down','left','right']
+				takenAction = refDirectAr[pos.index(max(pos))]
+				direction, value, coord, index = nextMove(coord,takenAction)
 			pos[index] = round(value,2)
 			pos = grid[coord[0]][coord[1]]
 			movementList.append([direction, coord])
 
-			#print movementList
-			#print '\n\n'
-			#viewGrid(grid)
-			#print '\n\n'
+			'''
+			print movementList
+			print '\n\n'
+			viewGrid(grid)
+			print '\n\n'
+			'''
+
 			if pos[0] == '+' or pos[0] == '-':
 				# terminal state
 				terminalState = True
@@ -235,6 +200,10 @@ def runTraining():
 
 		episodeNum += 1
 		print movementList
+		print 'Ending at state: ', coord, ' with reward: ', pos
+
+		#viewGrid(grid)
+		epsilon = epsilon * epsilonDecay
 
 		if episodeNum > episodeLimit:
 			print '\n\n\n\n'
@@ -243,6 +212,7 @@ def runTraining():
 
 	return
 
+grid = initalizeGrid(grid)
 
 print 'Inital State'
 viewGrid(grid)
@@ -251,6 +221,8 @@ print '\n\n\n'
 runTraining()
 
 print '\n\n\n'
+print 1.0 - epsilon 
+print '\n\n'
 viewGrid(grid)
 print '\n\n\n'
 
