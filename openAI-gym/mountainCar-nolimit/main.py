@@ -27,7 +27,7 @@ random.seed(seed_value)
 
 ###### PARAMS ######
 learning_rate = 0.001
-num_episodes = 3000
+num_episodes = 1000
 gamma = 1.0
 
 hidden_layer = 64
@@ -57,6 +57,14 @@ def calculate_epsilon(steps_done, epsilon):
         if epsilon > egreedy_final:
             epsilon *= 0.999999
         return epsilon
+
+def plot_results():
+        plt.figure(figsize=(12,5))
+        plt.title("Rewards")
+        plt.plot(reward_total, alpha=0.6, color='red')
+        plt.savefig("Pong-results.png")
+        plt.close()
+
 
 
 class ExperienceReplay(object):
@@ -230,9 +238,11 @@ for i_episode in range(num_episodes):
         
         if done:
             reward_total.append(score)
-            
+            print 'Score: ', score 
             mean_reward_100 = sum(reward_total[-100:])/100
-            
+           
+            plot_results()
+ 
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
                 solved_after = i_episode
