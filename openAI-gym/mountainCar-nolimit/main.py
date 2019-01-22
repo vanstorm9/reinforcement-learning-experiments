@@ -229,6 +229,8 @@ for i_episode in range(num_episodes):
 
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
+
+
  
         score += reward      
 
@@ -242,6 +244,7 @@ for i_episode in range(num_episodes):
             mean_reward_100 = sum(reward_total[-100:])/100
            
             plot_results()
+            torch.save(qnet_agent.nn, 'model.pt')
  
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
@@ -284,4 +287,3 @@ plt.bar(torch.arange(len(reward_total)), reward_total, alpha=0.6, color='green')
 plt.show()
 
 env.close()
-env.env.close()
