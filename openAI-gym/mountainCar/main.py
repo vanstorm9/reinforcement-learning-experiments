@@ -9,6 +9,8 @@ import random
 import math
 import time
 
+import matplotlib as mlp
+mlp.use('Agg')
 import matplotlib.pyplot as plt
 
 # if gpu is to be used
@@ -27,7 +29,7 @@ random.seed(seed_value)
 
 ###### PARAMS ######
 learning_rate = 0.001
-num_episodes = 1000
+num_episodes = 9999999
 gamma = 1.0
 
 hidden_layer = 64
@@ -55,7 +57,7 @@ number_of_outputs = env.action_space.n
 
 def calculate_epsilon(steps_done, epsilon):
         if epsilon > egreedy_final:
-            epsilon *= 0.999999
+            epsilon *= 0.9999999
         return epsilon
 
 def plot_results():
@@ -213,7 +215,6 @@ for i_episode in range(num_episodes):
     
     score = 0
     #for step in range(100):
-    print i_episode, ': ', epsilon
     while True:
 
         
@@ -232,16 +233,15 @@ for i_episode in range(num_episodes):
  
         score += reward      
 
-        env.render()
 
         state = new_state
         
         if done:
             reward_total.append(score)
-            print 'Score: ', score 
             mean_reward_100 = sum(reward_total[-100:])/100
            
             plot_results()
+
  
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
@@ -265,7 +265,9 @@ for i_episode in range(num_episodes):
                     frames_total
                           ) 
                   )
-                  
+                print i_episode, ': ', epsilon, ' , score: ', score
+                 
+                torch.save(qnet_agent.nn, 'model.pt') 
                 elapsed_time = time.time() - start_time
                 print("Elapsed time: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
