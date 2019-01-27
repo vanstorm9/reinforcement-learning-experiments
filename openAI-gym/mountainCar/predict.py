@@ -116,8 +116,8 @@ class QNet_Agent(object):
         self.nn = NeuralNetwork().to(device)
         self.target_nn = NeuralNetwork().to(device)
         '''
-        self.nn = torch.load('./model.pt',map_location=device) 
-        self.target = torch.load('./model.pt',map_location=device)
+        self.nn = torch.load('./modelTrained.pt',map_location=device) 
+        self.target = torch.load('./modelTrained.pt',map_location=device)
 
 
         self.loss_func = nn.MSELoss()
@@ -258,7 +258,6 @@ for i_episode in range(num_episodes):
                   )
                 print i_episode, ': ', epsilon, ' , score: ', score
                  
-                torch.save(qnet_agent.nn, 'model.pt') 
                 elapsed_time = time.time() - start_time
                 print("Elapsed time: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
