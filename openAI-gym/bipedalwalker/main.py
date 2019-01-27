@@ -18,7 +18,7 @@ device = torch.device("cuda:0" if use_cuda else "cpu")
 Tensor = torch.Tensor
 LongTensor = torch.LongTensor
 
-env = gym.make('Pendulum-v0')
+env = gym.make('BipedalWalker-v2')
 
 seed_value = 23
 env.seed(seed_value)
@@ -62,7 +62,7 @@ def plot_results():
         plt.figure(figsize=(12,5))
         plt.title("Rewards")
         plt.plot(reward_total, alpha=0.6, color='red')
-        plt.savefig("Pendulum-results.png")
+        plt.savefig("lunarlander-results.png")
         plt.close()
 
 

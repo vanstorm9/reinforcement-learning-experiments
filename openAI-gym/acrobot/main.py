@@ -59,8 +59,8 @@ def calculate_epsilon(steps_done, epsilon):
         return epsilon
 
 def plot_results():
-        plt.figure(figsize=(12,5))
         plt.title("Rewards")
+        plt.ylim([-600,10])
         plt.plot(reward_total, alpha=0.6, color='red')
         plt.savefig("Acrobot-results.png")
         plt.close()
