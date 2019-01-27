@@ -60,14 +60,6 @@ def calculate_epsilon(steps_done, epsilon):
             epsilon *= 0.9999999
         return epsilon
 
-def plot_results():
-        plt.figure(figsize=(12,5))
-        plt.title("Rewards")
-        plt.plot(reward_total, alpha=0.6, color='red')
-        plt.savefig("mountaincar-200-results.png")
-        plt.close()
-
-
 
 class ExperienceReplay(object):
     def __init__(self, capacity):
@@ -120,8 +112,13 @@ class NeuralNetwork(nn.Module):
     
 class QNet_Agent(object):
     def __init__(self):
+        '''
         self.nn = NeuralNetwork().to(device)
         self.target_nn = NeuralNetwork().to(device)
+        '''
+        self.nn = torch.load('./model.pt',map_location=device) 
+        self.target = torch.load('./model.pt',map_location=device)
+
 
         self.loss_func = nn.MSELoss()
         #self.loss_func = nn.SmoothL1Loss()
@@ -220,16 +217,17 @@ for i_episode in range(num_episodes):
         
         frames_total += 1
         
-        #epsilon = calculate_epsilon(frames_total)
-        epsilon = calculate_epsilon(frames_total, epsilon)        
-
+        #epsilon = calculate_epsilon(frames_total, epsilon)        
+        epsilon = 0.00000001
         #action = env.action_space.sample()
         action = qnet_agent.select_action(state, epsilon)
         
         new_state, reward, done, info = env.step(action)
 
-        memory.push(state, action, new_state, reward, done)
-        qnet_agent.optimize()
+        #memory.push(state, action, new_state, reward, done)
+        #qnet_agent.optimize()
+
+        env.render()
  
         score += reward      
 
@@ -239,14 +237,7 @@ for i_episode in range(num_episodes):
         if done:
             reward_total.append(score)
             mean_reward_100 = sum(reward_total[-100:])/100
-           
-            plot_results()
-
- 
-            if (mean_reward_100 > score_to_solve and solved == False):
-                print("SOLVED! After %i episodes " % i_episode)
-                solved_after = i_episode
-                solved = True
+            
             
             if (i_episode % report_interval == 0):
                 
