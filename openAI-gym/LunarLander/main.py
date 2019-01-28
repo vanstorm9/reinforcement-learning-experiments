@@ -64,7 +64,7 @@ def plot_results():
         plt.figure(figsize=(12,5))
         plt.title("Rewards")
         plt.plot(reward_total, alpha=0.6, color='red')
-        plt.savefig("mountaincar-200-results.png")
+        plt.savefig("lunarlander-results.png")
         plt.close()
 
 
