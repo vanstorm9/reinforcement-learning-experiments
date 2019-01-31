@@ -57,14 +57,14 @@ number_of_outputs = env.action_space.n
 
 def calculate_epsilon(steps_done, epsilon):
         if epsilon > egreedy_final:
-            epsilon *= 0.9999999
+            epsilon *= 0.99999999
         return epsilon
 
 def plot_results():
         plt.figure(figsize=(12,5))
         plt.title("Rewards")
         plt.plot(reward_total, alpha=0.6, color='red')
-        plt.savefig("lunarlander-results.png")
+        plt.savefig("lunarlander-results-LD.png")
         plt.close()
 
 
@@ -269,7 +269,7 @@ for i_episode in range(num_episodes):
                   )
                 print i_episode, ': ', epsilon, ' , score: ', score
                  
-                torch.save(qnet_agent.nn, 'model.pt') 
+                torch.save(qnet_agent.nn, 'modelLD.pt') 
                 elapsed_time = time.time() - start_time
                 print("Elapsed time: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
