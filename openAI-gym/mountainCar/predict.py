@@ -103,10 +103,10 @@ class NeuralNetwork(nn.Module):
         output1 = self.linear1(x)
         output1 = self.activation(output1)
 
-	output_advantage = self.advantage(output1)
-	output_value = self.value(output1)
+        output_advantage = self.advantage(output1)
+        output_value = self.value(output1)
 
-	output_final = output_value + output_advantage - output_advantage.mean()
+        output_final = output_value + output_advantage - output_advantage.mean()
 
         return output_final
     
@@ -256,7 +256,7 @@ for i_episode in range(num_episodes):
                     frames_total
                           ) 
                   )
-                print i_episode, ': ', epsilon, ' , score: ', score
+                print(i_episode, ': ', epsilon, ' , score: ', score)
                  
                 elapsed_time = time.time() - start_time
                 print("Elapsed time: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))

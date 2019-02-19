@@ -76,25 +76,25 @@ def calculate_epsilon(steps_done):
     return epsilon
 
 def load_model():
-	return torch.load(file2save)
+        return torch.load(file2save)
 
 def save_model(model):
-	torch.save(model.state_dict(), file2save)
+        torch.save(model.state_dict(), file2save)
 
 def preprocess_frame(frame):
-	frame = frame.transpose((2,0,1))
-	frame = torch.from_numpy(frame)
-	frame = frame.to(device, dtype=torch.float32)
-	frame = frame.unsqueeze(1)
+        frame = frame.transpose((2,0,1))
+        frame = torch.from_numpy(frame)
+        frame = frame.to(device, dtype=torch.float32)
+        frame = frame.unsqueeze(1)
 
-	return frame
+        return frame
 
 def plot_results():
-	plt.figure(figsize=(12,5))
-	plt.title("Rewards")
-	plt.plot(rewards_total, alpha=0.6, color='red')
-	plt.savefig("Pong-results.png")
-	plt.close()
+        plt.figure(figsize=(12,5))
+        plt.title("Rewards")
+        plt.plot(rewards_total, alpha=0.6, color='red')
+        plt.savefig("Pong-results.png")
+        plt.close()
 
 
 class ExperienceReplay(object):
@@ -125,9 +125,9 @@ class NeuralNetwork(nn.Module):
     def __init__(self):
         super(NeuralNetwork, self).__init__()
        
-	self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=4)
-	self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
-	self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
  
         self.advantage1 = nn.Linear(7*7*64,hidden_layer)
         self.advantage2 = nn.Linear(hidden_layer, number_of_outputs)
@@ -141,8 +141,8 @@ class NeuralNetwork(nn.Module):
         
     def forward(self, x):
 
-	if normalize_image:
-		x = x / 255
+        if normalize_image:
+                x = x / 255
 
         output_conv = self.conv1(x)
         output_conv = self.activation(output_conv)
@@ -151,7 +151,7 @@ class NeuralNetwork(nn.Module):
         output_conv = self.conv3(output_conv)
         output_conv = self.activation(output_conv)
        
-	output_conv = output_conv.view(output_conv.size(0), -1)  # flatten
+        output_conv = output_conv.view(output_conv.size(0), -1)  # flatten
  
         output_advantage = self.advantage1(output_conv)
         output_advantage = self.activation(output_advantage)
@@ -178,9 +178,9 @@ class QNet_Agent(object):
         
         self.number_of_frames = 0
        
-	if resume_previous_training and os.path.exists(file2save):
-		print("Loading previously saved model . . .")
-		self.nn.model.load_state_dict(load_model())
+        if resume_previous_training and os.path.exists(file2save):
+                print("Loading previously saved model . . .")
+                self.nn.model.load_state_dict(load_model())
 
 
  
@@ -192,7 +192,7 @@ class QNet_Agent(object):
             
             with torch.no_grad():
                
-		state = preprocess_frame(state) 
+                state = preprocess_frame(state) 
                 action_from_nn = self.nn(state)
                 action = torch.max(action_from_nn,1)[1]
                 action = action.item()        
@@ -208,12 +208,12 @@ class QNet_Agent(object):
         
         state, action, new_state, reward, done = memory.sample(batch_size)
        
-	state = [ preprocess_frame(frame) for frame in state ]
-	state = torch.cat(state)
+        state = [ preprocess_frame(frame) for frame in state ]
+        state = torch.cat(state)
 
 
-	new_state = [ preprocess_frame(frame) for frame in new_state ]
-	new_state = torch.cat(new_state)
+        new_state = [ preprocess_frame(frame) for frame in new_state ]
+        new_state = torch.cat(new_state)
  
         reward = Tensor(reward).to(device)
         action = LongTensor(action).to(device)
@@ -249,8 +249,8 @@ class QNet_Agent(object):
         if self.number_of_frames % update_target_frequency == 0:
             self.target_nn.load_state_dict(self.nn.state_dict())
        
-	if self.number_of_frames % save_model_frequency == 0:
-		save_model(self.nn)
+        if self.number_of_frames % save_model_frequency == 0:
+                save_model(self.nn)
  
         self.number_of_frames += 1
         
@@ -271,7 +271,7 @@ solved = False
 start_time = time.time()
 
 for i_episode in range(num_episodes):
-    print 'Starting episode ', i_episode
+    print('Starting episode ', i_episode)
     state = env.reset()
     
     score = 0
@@ -290,11 +290,11 @@ for i_episode in range(num_episodes):
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
         
-	score += reward
+        score += reward
 
         state = new_state
        
-	
+        
  
         if done:
             rewards_total.append(score)
@@ -308,7 +308,7 @@ for i_episode in range(num_episodes):
             
             if (i_episode % report_interval == 0 and i_episode > 0):
                 
-               	plot_results() 
+                plot_results() 
                 
                 print("\n*** Episode %i *** \
                       \nAv.reward: [last %i]: %.2f, [last 100]: %.2f, [all]: %.2f \
