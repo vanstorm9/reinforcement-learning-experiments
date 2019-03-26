@@ -57,7 +57,7 @@ batch_size = 32
 
 update_target_frequency = 5000
 
-double_dqn = True
+double_dqn = False
 
 egreedy = 0.9
 egreedy_final = 0.01
@@ -138,10 +138,10 @@ class NeuralNetwork(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
  
-        self.advantage1 = nn.Linear(7*7*64,hidden_layer)
+        self.advantage1 = nn.Linear(26*28*64,hidden_layer)
         self.advantage2 = nn.Linear(hidden_layer, number_of_outputs)
         
-        self.value1 = nn.Linear(7*7*64,hidden_layer)
+        self.value1 = nn.Linear(26*28*64,hidden_layer)
         self.value2 = nn.Linear(hidden_layer,1)
 
         #self.activation = nn.Tanh()
@@ -160,8 +160,9 @@ class NeuralNetwork(nn.Module):
         output_conv = self.conv3(output_conv)
         output_conv = self.activation(output_conv)
        
+        #print(output_conv.shape) 
         output_conv = output_conv.view(output_conv.size(0), -1)  # flatten
-        print(output_conv.shape) 
+        #print(output_conv.shape) 
         output_advantage = self.advantage1(output_conv)
         output_advantage = self.activation(output_advantage)
         output_advantage = self.advantage2(output_advantage)
@@ -169,7 +170,8 @@ class NeuralNetwork(nn.Module):
         output_value = self.value1(output_conv)
         output_value = self.activation(output_value)
         output_value = self.value2(output_value)
-        
+        #print('output value: ',output_value.shape)
+
         output_final = output_value + output_advantage - output_advantage.mean()
 
         return output_final
@@ -204,7 +206,10 @@ class QNet_Agent(object):
                 state = preprocess_frame(state) 
                 action_from_nn = self.nn(state)
                 action = torch.max(action_from_nn,1)[1]
-                action = action.item()        
+
+                # We need to fix this eventually
+                action = action[0].item()        
+                #action = action.item()        
         else:
             action = env.action_space.sample()
         
@@ -220,10 +225,11 @@ class QNet_Agent(object):
         state = [ preprocess_frame(frame) for frame in state ]
         state = torch.cat(state)
 
-
+        
         new_state = [ preprocess_frame(frame) for frame in new_state ]
         new_state = torch.cat(new_state)
- 
+        #print('new_state: ', new_state.shape)
+
         reward = Tensor(reward).to(device)
         action = LongTensor(action).to(device)
         done = Tensor(done).to(device)
@@ -239,10 +245,19 @@ class QNet_Agent(object):
             new_state_values = self.target_nn(new_state).detach()
             max_new_state_values = torch.max(new_state_values, 1)[0]
         
-        
-        target_value = reward + ( 1 - done ) * gamma * max_new_state_values
+
+        #print('tar: ',max_new_state_values.shape) 
+        #print('reward: ',reward.shape)
+        #print('test: ', max_new_state_values)
+
+        # We need to fix this
+        target_value = reward + ( 1 - done ) * gamma * max_new_state_values[:32]
+        #target_value = reward + ( 1 - done ) * gamma * max_new_state_values
   
-        predicted_value = self.nn(state).gather(1, action.unsqueeze(1)).squeeze(1)
+
+        # We need to fix this
+        predicted_value = self.nn(state[:32]).gather(1, action.unsqueeze(1)).squeeze(1)
+        #predicted_value = self.nn(state[:32]).gather(1, action.unsqueeze(1)).squeeze(1)
         
         loss = self.loss_func(predicted_value, target_value)
     
@@ -295,10 +310,11 @@ for i_episode in range(num_episodes):
         action = qnet_agent.select_action(state, epsilon)
         
         new_state, reward, done, info = env.step(action)
-
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
         
+        #env.render()
+
         score += reward
 
         state = new_state
