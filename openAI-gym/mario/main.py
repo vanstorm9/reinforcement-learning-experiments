@@ -47,7 +47,10 @@ random.seed(seed_value)
 
 ###### PARAMS ######
 learning_rate = 0.0001
-num_episodes = 500
+num_episodes = 5000
+startNum = 500
+newModel = False
+
 gamma = 0.99
 
 hidden_layer = 512
@@ -59,7 +62,7 @@ update_target_frequency = 5000
 
 double_dqn = False
 
-egreedy = 0.9
+egreedy = 0.0 ##################
 egreedy_final = 0.01
 egreedy_decay = 10000
 
@@ -83,6 +86,7 @@ def calculate_epsilon(steps_done):
               math.exp(-1. * steps_done / egreedy_decay )
     return epsilon
 
+
 def load_model():
         return torch.load(file2save)
 
@@ -98,11 +102,11 @@ def preprocess_frame(frame):
 
         return frame
 
-def plot_results():
+def pcot_results():
         plt.figure(figsize=(12,5))
         plt.title("Rewards")
         plt.plot(rewards_total, alpha=0.6, color='red')
-        plt.savefig("Pong-results.png")
+        plt.savefig("Mario-results.png")
         plt.close()
 
 
@@ -178,8 +182,14 @@ class NeuralNetwork(nn.Module):
     
 class QNet_Agent(object):
     def __init__(self):
+
         self.nn = NeuralNetwork().to(device)
         self.target_nn = NeuralNetwork().to(device)
+
+        if not newModel:
+            # load model
+            self.nn = torch.load('./model/model.pt',map_location=device)
+            self.target_nn = torch.load('./model/model.pt',map_location=device)
 
         self.loss_func = nn.MSELoss()
         #self.loss_func = nn.SmoothL1Loss()
@@ -294,7 +304,7 @@ solved = False
 
 start_time = time.time()
 
-for i_episode in range(num_episodes):
+for i_episode in range(startNum,num_episodes):
     print('Starting episode ', i_episode)
     state = env.reset()
     
@@ -313,7 +323,7 @@ for i_episode in range(num_episodes):
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
         
-        #env.render()
+        env.render()
 
         score += reward
 
@@ -348,7 +358,7 @@ for i_episode in range(num_episodes):
                     frames_total
                           ) 
                   )
-                  
+                torch.save(qnet_agent.nn,'model.pt')    
                 elapsed_time = time.time() - start_time
                 print("Elapsed time: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
 
@@ -361,6 +371,7 @@ print("\n\n\n\nAverage reward: %.2f" % (sum(rewards_total)/num_episodes))
 print("Average reward (last 100 episodes): %.2f" % (sum(rewards_total[-100:])/100))
 if solved:
     print("Solved after %i episodes" % solved_after)
+
 
 env.close()
 env.env.close()
