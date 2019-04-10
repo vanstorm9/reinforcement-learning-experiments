@@ -62,9 +62,9 @@ update_target_frequency = 5000
 
 double_dqn = False
 
-egreedy = 0.0 ##################
-egreedy_final = 0.01
-egreedy_decay = 10000
+epsilon = 0.5 ##################
+egreedy_final = 0.001
+#egreedy_decay = 10000
 
 report_interval = 10
 score_to_solve = 18
@@ -81,11 +81,16 @@ resume_previous_training = False
 number_of_inputs = env.observation_space.shape[0]
 number_of_outputs = env.action_space.n
 
+'''
 def calculate_epsilon(steps_done):
     epsilon = egreedy_final + (egreedy - egreedy_final) * \
               math.exp(-1. * steps_done / egreedy_decay )
     return epsilon
-
+'''
+def calculate_epsilon(steps_done, epsilon):
+        if epsilon > egreedy_final:
+            epsilon *= 0.9999999
+        return epsilon
 
 def load_model():
         return torch.load(file2save)
@@ -305,16 +310,18 @@ solved = False
 start_time = time.time()
 
 for i_episode in range(startNum,num_episodes):
-    print('Starting episode ', i_episode)
     state = env.reset()
     
     score = 0
+    infoStr = 'Starting episode '+ str(i_episode)+ '/ epsilon: '+ str(epsilon)
+    #print(infoStr,end='')  # Python 3
+    print infoStr, # Python 2
     #for step in range(100):
     while True:
         
         frames_total += 1
         
-        epsilon = calculate_epsilon(frames_total)
+        epsilon = calculate_epsilon(frames_total,epsilon)
         
         #action = env.action_space.sample()
         action = qnet_agent.select_action(state, epsilon)
@@ -323,7 +330,7 @@ for i_episode in range(startNum,num_episodes):
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
         
-        env.render()
+        #env.render()
 
         score += reward
 
@@ -335,7 +342,10 @@ for i_episode in range(startNum,num_episodes):
             rewards_total.append(score)
             
             mean_reward_100 = sum(rewards_total[-100:])/100
-            
+            scoreStr = '/ score:'+str(score)
+            #print(score, end='\n')   # Python 3
+            print score, # Python 2
+
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
                 solved_after = i_episode
@@ -343,7 +353,7 @@ for i_episode in range(startNum,num_episodes):
             
             if (i_episode % report_interval == 0 and i_episode > 0):
                 
-                plot_results() 
+                #plot_results() 
                 
                 print("\n*** Episode %i *** \
                       \nAv.reward: [last %i]: %.2f, [last 100]: %.2f, [all]: %.2f \
