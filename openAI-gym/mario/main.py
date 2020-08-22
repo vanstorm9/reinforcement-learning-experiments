@@ -114,7 +114,7 @@ def preprocess_frame(frame):
 
         return frame
 
-def pcot_results():
+def plot_results():
         plt.figure(figsize=(12,5))
         plt.title("Rewards")
         plt.plot(rewards_total, alpha=0.6, color='red')
@@ -223,23 +223,23 @@ class QNet_Agent(object):
         print('Random for egreedy: ', random_for_egreedy.item(),'>   epsilon: ', epsilon) 
         print('-------------------') 
         if random_for_egreedy.item() > epsilon:      
-            print('Greater than epsilon') 
+            #print('Greater than epsilon') 
             with torch.no_grad():
                 # Convert state to grayscale
                 #print('state: ', state.shape)
                 #state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
                 #print('state: ', state.shape)
                 #print('state: ', state.shape)
-                print('state: ', state.shape)
+                #print('state: ', state.shape)
                
                 state = preprocess_frame(state)
                 
 
 
-                print('state: ', state.shape)
+                #print('state: ', state.shape)
                 action_from_nn = self.nn(state)
-                print('action_from_nn: ',action_from_nn)
-                print('action_from_nn.shape: ',action_from_nn.shape)
+                #print('action_from_nn: ',action_from_nn)
+                #print('action_from_nn.shape: ',action_from_nn.shape)
                 action = torch.max(action_from_nn,1)[1]
                 print('action: ',action)
                 print('action.shape :',action.shape)
@@ -247,18 +247,18 @@ class QNet_Agent(object):
                 #action = action[0].item()        
                 action = action.item()        
         else:
-            print('Less than epsilon') 
+            #print('Less than epsilon') 
             #action = env.action_space.sample()
             #frame = frame.transpose((2,0,1))
-            print('state.shape: ', state.shape)
+            #print('state.shape: ', state.shape)
             if state.shape[2] == 3:
                 state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
                 #cv2.imshow('state',state)
                 #cv2.waitKey(0)
                 state = np.expand_dims(state,axis=2)
-            print('state.shape: ', state.shape)
+            #print('state.shape: ', state.shape)
             action = qnet_agent.select_action(state, epsilon)
-            print('[',action,']')
+            #print('[',action,']')
             #print(action.shape)
 
         return action
@@ -273,7 +273,7 @@ class QNet_Agent(object):
         state = [ preprocess_frame(frame) for frame in state ]
         state = torch.cat(state)
 
-        print('len(new_state):', len(new_state))
+        #print('len(new_state):', len(new_state))
          
         new_state = [ preprocess_frame(frame) for frame in new_state ]
         new_state = torch.cat(new_state)
@@ -303,8 +303,8 @@ class QNet_Agent(object):
 
         # We need to fix this
         #target_value = reward + ( 1 - done ) * gamma * max_new_state_values[:32]
-        print('max_new_state_values.shape: ',max_new_state_values.shape)
-        print('reward.shape: ',reward.shape)
+        #print('max_new_state_values.shape: ',max_new_state_values.shape)
+        #print('reward.shape: ',reward.shape)
         
         target_value = reward + ( 1 - done ) * gamma * max_new_state_values
   
@@ -353,10 +353,10 @@ for i_episode in range(startNum,num_episodes):
    
     # Converting to gray scale
 
-    print('STATE: ',state.shape) 
+    #print('STATE: ',state.shape) 
     state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
     state = np.expand_dims(state,axis=2)
-    print('STATE: ',state.shape) 
+    #print('STATE: ',state.shape) 
 
     score = 0
     infoStr = 'Starting episode '+ str(i_episode)+ '/ epsilon: '+ str(epsilon)
@@ -391,7 +391,7 @@ for i_episode in range(startNum,num_episodes):
             scoreStr = '/ score:'+str(score)
             print(score, end='\n')   # Python 3
             #print score, # Python 2
-            print(score) 
+            print('Score: ',score) 
 
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
@@ -400,7 +400,7 @@ for i_episode in range(startNum,num_episodes):
             
             if (i_episode % report_interval == 0 and i_episode > 0):
                 
-                #plot_results() 
+                plot_results() 
                 
                 print("\n*** Episode %i *** \
                       \nAv.reward: [last %i]: %.2f, [last 100]: %.2f, [all]: %.2f \
