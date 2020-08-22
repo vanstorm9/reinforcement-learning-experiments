@@ -389,12 +389,9 @@ for i_episode in range(startNum,num_episodes):
             
             mean_reward_100 = sum(rewards_total[-100:])/100
             scoreStr = '/ score:'+str(score)
-<<<<<<< HEAD
             print(score, end='\n')   # Python 3
             #print score, # Python 2
-=======
             print(score) 
->>>>>>> 3250cd7906969041446ddc7119d73f10670a581a
 
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
