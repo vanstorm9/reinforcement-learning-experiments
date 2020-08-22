@@ -220,8 +220,8 @@ class QNet_Agent(object):
     def select_action(self,state,epsilon):
         
         random_for_egreedy = torch.rand(1)[0]
-        print('Random for egreedy: ', random_for_egreedy.item(),'>   epsilon: ', epsilon) 
-        print('-------------------') 
+        #print('Random for egreedy: ', random_for_egreedy.item(),'>   epsilon: ', epsilon) 
+        #print('-------------------') 
         if random_for_egreedy.item() > epsilon:      
             #print('Greater than epsilon') 
             with torch.no_grad():
@@ -241,8 +241,6 @@ class QNet_Agent(object):
                 #print('action_from_nn: ',action_from_nn)
                 #print('action_from_nn.shape: ',action_from_nn.shape)
                 action = torch.max(action_from_nn,1)[1]
-                print('action: ',action)
-                print('action.shape :',action.shape)
                 # We need to fix this eventually
                 #action = action[0].item()        
                 action = action.item()        
@@ -267,7 +265,7 @@ class QNet_Agent(object):
          
         if (len(memory) < batch_size):
             return
-        print('-----------------')
+        #print('-----------------')
         state, action, new_state, reward, done = memory.sample(batch_size)
        
         state = [ preprocess_frame(frame) for frame in state ]
@@ -284,10 +282,10 @@ class QNet_Agent(object):
         done = Tensor(done).to(device)
 
 
-        print('new_state.shape:', new_state.shape)
+        #print('new_state.shape:', new_state.shape)
         if double_dqn:
             new_state_indexes = self.nn(new_state).detach()
-            print('new_state_indexes.shape: ',new_state_indexes.shape)
+            #print('new_state_indexes.shape: ',new_state_indexes.shape)
             max_new_state_indexes = torch.max(new_state_indexes, 1)[1]  
             
             new_state_values = self.target_nn(new_state).detach()
