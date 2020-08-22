@@ -49,14 +49,18 @@ random.seed(seed_value)
 learning_rate = 0.0001
 num_episodes = 5000
 startNum = 500
-newModel = False
+#newModel = False
+newModel = True
 
 gamma = 0.99
 
 hidden_layer = 512
 
 replay_mem_size = 100000
+
+# We may want to fix this
 batch_size = 32
+#batch_size = 96
 
 update_target_frequency = 5000
 
@@ -99,6 +103,9 @@ def save_model(model):
         torch.save(model.state_dict(), file2save)
 
 def preprocess_frame(frame):
+        if frame.shape[2] == 3:
+            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2GRAY)
+            frame = np.expand_dims(frame,axis=2)
         frame = frame.transpose((2,0,1))
         frame = np.flip(frame,axis=0).copy()
         frame = torch.from_numpy(frame)
@@ -213,34 +220,61 @@ class QNet_Agent(object):
     def select_action(self,state,epsilon):
         
         random_for_egreedy = torch.rand(1)[0]
-        
-        if random_for_egreedy > epsilon:      
-            
+        print('Random for egreedy: ', random_for_egreedy.item(),'>   epsilon: ', epsilon) 
+        print('-------------------') 
+        if random_for_egreedy.item() > epsilon:      
+            print('Greater than epsilon') 
             with torch.no_grad():
+                # Convert state to grayscale
+                #print('state: ', state.shape)
+                #state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
+                #print('state: ', state.shape)
+                #print('state: ', state.shape)
+                print('state: ', state.shape)
                
-                state = preprocess_frame(state) 
-                action_from_nn = self.nn(state)
-                action = torch.max(action_from_nn,1)[1]
+                state = preprocess_frame(state)
+                
 
+
+                print('state: ', state.shape)
+                action_from_nn = self.nn(state)
+                print('action_from_nn: ',action_from_nn)
+                print('action_from_nn.shape: ',action_from_nn.shape)
+                action = torch.max(action_from_nn,1)[1]
+                print('action: ',action)
+                print('action.shape :',action.shape)
                 # We need to fix this eventually
-                action = action[0].item()        
-                #action = action.item()        
+                #action = action[0].item()        
+                action = action.item()        
         else:
-            action = env.action_space.sample()
-        
+            print('Less than epsilon') 
+            #action = env.action_space.sample()
+            #frame = frame.transpose((2,0,1))
+            print('state.shape: ', state.shape)
+            if state.shape[2] == 3:
+                state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
+                #cv2.imshow('state',state)
+                #cv2.waitKey(0)
+                state = np.expand_dims(state,axis=2)
+            print('state.shape: ', state.shape)
+            action = qnet_agent.select_action(state, epsilon)
+            print('[',action,']')
+            #print(action.shape)
+
         return action
     
     def optimize(self):
-        
+         
         if (len(memory) < batch_size):
             return
-        
+        print('-----------------')
         state, action, new_state, reward, done = memory.sample(batch_size)
        
         state = [ preprocess_frame(frame) for frame in state ]
         state = torch.cat(state)
 
-        
+        print('len(new_state):', len(new_state))
+         
         new_state = [ preprocess_frame(frame) for frame in new_state ]
         new_state = torch.cat(new_state)
         #print('new_state: ', new_state.shape)
@@ -250,8 +284,10 @@ class QNet_Agent(object):
         done = Tensor(done).to(device)
 
 
+        print('new_state.shape:', new_state.shape)
         if double_dqn:
             new_state_indexes = self.nn(new_state).detach()
+            print('new_state_indexes.shape: ',new_state_indexes.shape)
             max_new_state_indexes = torch.max(new_state_indexes, 1)[1]  
             
             new_state_values = self.target_nn(new_state).detach()
@@ -266,13 +302,16 @@ class QNet_Agent(object):
         #print('test: ', max_new_state_values)
 
         # We need to fix this
-        target_value = reward + ( 1 - done ) * gamma * max_new_state_values[:32]
-        #target_value = reward + ( 1 - done ) * gamma * max_new_state_values
+        #target_value = reward + ( 1 - done ) * gamma * max_new_state_values[:32]
+        print('max_new_state_values.shape: ',max_new_state_values.shape)
+        print('reward.shape: ',reward.shape)
+        
+        target_value = reward + ( 1 - done ) * gamma * max_new_state_values
   
 
         # We need to fix this
-        predicted_value = self.nn(state[:32]).gather(1, action.unsqueeze(1)).squeeze(1)
         #predicted_value = self.nn(state[:32]).gather(1, action.unsqueeze(1)).squeeze(1)
+        predicted_value = self.nn(state[:32]).gather(1, action.unsqueeze(1)).squeeze(1)
         
         loss = self.loss_func(predicted_value, target_value)
     
@@ -311,11 +350,18 @@ start_time = time.time()
 
 for i_episode in range(startNum,num_episodes):
     state = env.reset()
-    
+   
+    # Converting to gray scale
+
+    print('STATE: ',state.shape) 
+    state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
+    state = np.expand_dims(state,axis=2)
+    print('STATE: ',state.shape) 
+
     score = 0
     infoStr = 'Starting episode '+ str(i_episode)+ '/ epsilon: '+ str(epsilon)
-    #print(infoStr,end='')  # Python 3
-    print infoStr, # Python 2
+    print(infoStr,end='')  # Python 3
+    #print infoStr, # Python 2
     #for step in range(100):
     while True:
         
@@ -330,7 +376,7 @@ for i_episode in range(startNum,num_episodes):
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
         
-        #env.render()
+        env.render()
 
         score += reward
 
@@ -343,7 +389,12 @@ for i_episode in range(startNum,num_episodes):
             
             mean_reward_100 = sum(rewards_total[-100:])/100
             scoreStr = '/ score:'+str(score)
+<<<<<<< HEAD
+            print(score, end='\n')   # Python 3
+            #print score, # Python 2
+=======
             print(score) 
+>>>>>>> 3250cd7906969041446ddc7119d73f10670a581a
 
             if (mean_reward_100 > score_to_solve and solved == False):
                 print("SOLVED! After %i episodes " % i_episode)
