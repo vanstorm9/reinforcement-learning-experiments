@@ -246,40 +246,21 @@ class QNet_Agent(object):
             # We choose the action
             with torch.no_grad():
                 # Convert state to grayscale
-                #print('state: ', state.shape)
-                #state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
-                #print('state: ', state.shape)
-                #print('state: ', state.shape)
-                #print('state: ', state.shape)
-               
                 state = preprocess_frame(state)
                 
-
-
-                #print('state: ', state.shape)
                 action_from_nn = self.nn(state)
-                #print('action_from_nn: ',action_from_nn)
-                #print('action_from_nn.shape: ',action_from_nn.shape)
                 action = torch.max(action_from_nn,1)[1]
                 # We need to fix this eventually
-                #action = action[0].item()        
                 action = action.item()        
         else:
-            #print('Less than epsilon') 
-            # We get a random action
-            #action = env.action_space.sample()
-            #frame = frame.transpose((2,0,1))
-            #print('state.shape: ', state.shape)
+            ##### We may or may not even need this ########
             if state.shape[2] == 3:
                 state = cv2.cvtColor(state, cv2.COLOR_RGB2GRAY)
                 #cv2.imshow('state',state)
                 #cv2.waitKey(0)
                 state = np.expand_dims(state,axis=2)
-            #print('state.shape: ', state.shape)
+            #################################################
             action = env.action_space.sample()
-            #action = qnet_agent.select_action(state, epsilon)
-            #print('[',action,']')
-            #print(action.shape)
 
         return action
     
