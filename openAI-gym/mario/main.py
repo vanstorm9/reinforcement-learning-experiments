@@ -17,7 +17,8 @@ import os
 import numpy as np
 
 import cv2
-from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv
+from nes_py.wrappers import JoypadSpace
+#from nes_py.wrappers import JoypadSpace as BinarySpaceToDiscreteSpaceEnv
 import gym_super_mario_bros
 from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
 
@@ -25,19 +26,28 @@ import matplotlib.pyplot as plt
 
 plt.style.use('ggplot')
 
+
+showEnviornment = False
+
+episodeNum = 0
+
 # if gpu is to be used
 use_cuda = torch.cuda.is_available()
 
 device = torch.device("cuda:0" if use_cuda else "cpu")
+print(device)
+
 Tensor = torch.Tensor
 LongTensor = torch.LongTensor
 
 env = gym_super_mario_bros.make('SuperMarioBros-v0')
-env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
+#env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
+env = JoypadSpace(env, SIMPLE_MOVEMENT)
 
 
-directory = './MarioVideos/'
-env = gym.wrappers.Monitor(env, directory, video_callable=lambda episode_id: episode_id%20==0)
+#directory = './MarioVideos/'
+directory = './MarioVideosLong/'
+env = gym.wrappers.Monitor(env, directory, video_callable=lambda episode_id: episode_id%5000==0)
 
 
 seed_value = 23
@@ -47,10 +57,11 @@ random.seed(seed_value)
 
 ###### PARAMS ######
 learning_rate = 0.0001
-num_episodes = 5000
+#num_episodes = 5000
+num_episodes = 9999999999
 startNum = 500
 #newModel = False
-newModel = True
+newModel = False
 
 gamma = 0.99
 
@@ -65,18 +76,20 @@ batch_size = 32
 update_target_frequency = 5000
 
 double_dqn = False
-
-epsilon = 0.5 ##################
+epsilon = 0.8 ##################
 egreedy_final = 0.001
 #egreedy_decay = 10000
 
 report_interval = 10
-score_to_solve = 18
+score_to_solve = 10000000
 
 clip_error = True
 normalize_image = True
 
-file2save = 'pong_save.pth'
+saveDir = './weightsLong/'
+#file2save = 'mario_save.pth'
+loadModelPath = saveDir+'model.pth'
+assert(os.path.exists(loadModelPath))
 save_model_frequency = 10000
 resume_previous_training = False
 
@@ -97,10 +110,10 @@ def calculate_epsilon(steps_done, epsilon):
         return epsilon
 
 def load_model():
-        return torch.load(file2save)
+        return torch.load(loadModelPath)
 
-def save_model(model):
-        torch.save(model.state_dict(), file2save)
+def save_model(model,savePath):
+        torch.save(model.state_dict(), savePath)
 
 def preprocess_frame(frame):
         if frame.shape[2] == 3:
@@ -118,7 +131,7 @@ def plot_results():
         plt.figure(figsize=(12,5))
         plt.title("Rewards")
         plt.plot(rewards_total, alpha=0.6, color='red')
-        plt.savefig("Mario-results.png")
+        plt.savefig("Mario-resultsLong.png")
         plt.close()
 
 
@@ -198,23 +211,29 @@ class QNet_Agent(object):
         self.nn = NeuralNetwork().to(device)
         self.target_nn = NeuralNetwork().to(device)
 
-        if not newModel:
-            # load model
-            self.nn = torch.load('./model/model.pt',map_location=device)
-            self.target_nn = torch.load('./model/model.pt',map_location=device)
+            
 
         self.loss_func = nn.MSELoss()
         #self.loss_func = nn.SmoothL1Loss()
-        
         self.optimizer = optim.Adam(params=self.nn.parameters(), lr=learning_rate)
+        
         #self.optimizer = optim.RMSprop(params=mynn.parameters(), lr=learning_rate)
         
         self.number_of_frames = 0
        
-        if resume_previous_training and os.path.exists(file2save):
+        #if resume_previous_training and os.path.exists(loadModelPath):
+        if not newModel:
+            # load model
+            print("Loading previously saved model . . .")
+            #self.nn = torch.load(loadModelPath,map_location=device)
+            #self.target_nn = torch.load(loadModelPath,map_location=device)
+            self.nn.load_state_dict(torch.load(loadModelPath,map_location=device))
+            self.target_nn.load_state_dict(torch.load(loadModelPath,map_location=device))
+        '''
+        if newModel and os.path.exists(loadModelPath):
                 print("Loading previously saved model . . .")
                 self.nn.model.load_state_dict(load_model())
-
+        '''
 
  
     def select_action(self,state,epsilon):
@@ -224,6 +243,7 @@ class QNet_Agent(object):
         #print('-------------------') 
         if random_for_egreedy.item() > epsilon:      
             #print('Greater than epsilon') 
+            # We choose the action
             with torch.no_grad():
                 # Convert state to grayscale
                 #print('state: ', state.shape)
@@ -246,6 +266,7 @@ class QNet_Agent(object):
                 action = action.item()        
         else:
             #print('Less than epsilon') 
+            # We get a random action
             #action = env.action_space.sample()
             #frame = frame.transpose((2,0,1))
             #print('state.shape: ', state.shape)
@@ -255,7 +276,8 @@ class QNet_Agent(object):
                 #cv2.waitKey(0)
                 state = np.expand_dims(state,axis=2)
             #print('state.shape: ', state.shape)
-            action = qnet_agent.select_action(state, epsilon)
+            action = env.action_space.sample()
+            #action = qnet_agent.select_action(state, epsilon)
             #print('[',action,']')
             #print(action.shape)
 
@@ -326,8 +348,11 @@ class QNet_Agent(object):
             self.target_nn.load_state_dict(self.nn.state_dict())
        
         if self.number_of_frames % save_model_frequency == 0:
-                save_model(self.nn)
- 
+            save_model(self.nn, saveDir+'mario_weights.pth')
+            try:
+                save_model(self.nn, saveDir+'mario_weights'+str(episodeNum)+'.pth')
+            except:
+                pass
         self.number_of_frames += 1
         
         #Q[state, action] = reward + gamma * torch.max(Q[new_state])
@@ -346,8 +371,11 @@ solved = False
 
 start_time = time.time()
 
+highestScore = 0
+episodeSave = 0
 for i_episode in range(startNum,num_episodes):
-    state = env.reset()
+    episodeNum = i_episode
+    state = env.reset()    
    
     # Converting to gray scale
 
@@ -361,6 +389,7 @@ for i_episode in range(startNum,num_episodes):
     print(infoStr,end='')  # Python 3
     #print infoStr, # Python 2
     #for step in range(100):
+    saveEpisode = 0
     while True:
         
         frames_total += 1
@@ -374,7 +403,8 @@ for i_episode in range(startNum,num_episodes):
         memory.push(state, action, new_state, reward, done)
         qnet_agent.optimize()
         
-        env.render()
+        if showEnviornment:
+            env.render()
 
         score += reward
 
@@ -383,12 +413,16 @@ for i_episode in range(startNum,num_episodes):
         
  
         if done:
+            if score > highestScore:
+                highestScore = score
+                episodeSave = i_episode
             rewards_total.append(score)
             
             mean_reward_100 = sum(rewards_total[-100:])/100
             scoreStr = '/ score:'+str(score)
             print(score, end='\n')   # Python 3
-            #print score, # Python 2
+            
+            print('Highest score ever achieved: ', highestScore, ' at: ', str(episodeSave))#print score, # Python 2
             print('Score: ',score) 
 
             if (mean_reward_100 > score_to_solve and solved == False):
@@ -416,6 +450,7 @@ for i_episode in range(startNum,num_episodes):
                 torch.save(qnet_agent.nn,'model.pt')    
                 elapsed_time = time.time() - start_time
                 print("Elapsed time: ", time.strftime("%H:%M:%S", time.gmtime(elapsed_time)))
+            #state = env.reset()
 
 
 
