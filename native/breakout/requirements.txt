@@ -1,5 +1,5 @@
 cycler==0.10.0
-dask==0.11.1
+dask==2021.10.0
 decorator==4.0.10
 -e git+https://github.com/openai/gym@2933a95ec5cc7efd282ed793d5efd6af6f2ce00f#egg=gym
 h5py==2.6.0
